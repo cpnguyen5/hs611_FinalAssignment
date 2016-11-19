@@ -7,14 +7,12 @@ from exceptions import Exception, AssertionError
 
 TABLE_NAME = "beneficiary_sample_2010"
 
-def cursor_connect(db_dsn, cursor_factory=None):
+def cursor_connect(cursor_factory=None):
     """
     Connects to the DB and returns the connection and cursor, ready to use.
 
     Parameters
     ----------
-    db_dsn : str, unicode
-        DSN of the database to connect to.
     cursor_factory : psycopg2.extras
         An optional psycopg2 cursor type, e.g. DictCursor.
 
@@ -23,6 +21,14 @@ def cursor_connect(db_dsn, cursor_factory=None):
     (psycopg2.extensions.connection, psycopg2.extensions.cursor)
         A tuple of (psycopg2 connection, psycopg2 cursor).
     """
+    #DB DSN
+    host = "cmsdata.chtdutbma0ig.us-west-2.rds.amazonaws.com"
+    dbname = "BENEFICIARYDATA"
+    user = "cpnguyen5"
+    password = "hs611"
+    db_dsn = "host={0} dbname={1} user={2} password={3}".format(
+        host, dbname, user, password)
+    #DB connection
     con = psycopg2.connect(dsn=db_dsn)
     con = psycopg2.connect(dsn=db_dsn)
     if not cursor_factory:
@@ -73,7 +79,7 @@ def disease_frequency(col):
     try:
         if cleaned_col not in accepted_cols:
             raise AssertionError("Column '{0}' is not allowed".format(cleaned_col))
-        con, cur = cursor_connect(db_dsn, psycopg2.extras.DictCursor)
+        con, cur = cursor_connect(psycopg2.extras.DictCursor)
         query = """
         SELECT state, {1}/claims::float AS frequency FROM (SELECT
         LHS.state AS state, {1}, claims FROM (SELECT state, count(*) AS
@@ -93,11 +99,5 @@ def disease_frequency(col):
 
 
 if __name__ == "__main__":
-    host = "cmsdata.chtdutbma0ig.us-west-2.rds.amazonaws.com"
-    dbname = "BENEFICIARYDATA"
-    user = "cpnguyen5"
-    password = "hs611"
-    db_dsn = "host={0} dbname={1} user={2} password={3}".format(
-        host, dbname, user, password)
-    cursor_connect(db_dsn)
+    cursor_connect()
     print disease_frequency('diabetes')
