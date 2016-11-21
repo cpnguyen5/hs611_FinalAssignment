@@ -38,6 +38,67 @@ def cursor_connect(cursor_factory=None):
     return con, cur
 
 
+def disease_bene_resp(disease_col):
+    """
+    Get the average outpatient beneficiary responsibility and deviation from the overall average of patient beneficiary
+    responsibility, grouped by race, in descending order of the average outpatient beneficiary responsibility by race.
+    The disease corresponds to the column name.
+
+    Parameters
+    ----------
+    disease_col : str, unicode
+        A column name specifying a disease/condition.
+
+    Returns
+    -------
+    json
+        A labeled JSON object with the race and their respective average outpatient beneficiary responsibility and
+        deviation from the overall average of outpatient beneficiary responsibility.
+    """
+    outpt_bene_resp = []
+    accepted_cols = (
+        "end_stage_renal_disease",
+        "alzheimers_related_senile",
+        "heart_failure",
+        "chronic_kidney",
+        "cancer",
+        "chronic_obstructive_pulmonary",
+        "depression",
+        "diabetes",
+        "ischemic_heart",
+        "osteoporosis",
+        "rheumatoid_osteo_arthritis",
+        "stroke_ischemic_attack",
+    )
+    # Strip the user input to alpha characters only
+    cleaned_col = re.sub('\W+', '', disease_col)
+    try:
+        if cleaned_col not in accepted_cols:
+            raise AssertionError("Column '{0}' is not allowed".format(cleaned_col)) # error inapplicable disease
+        con, cur = cursor_connect(psycopg2.extras.DictCursor) #access retrieved records as Python dict
+        query = """
+        SELECT race, avg_outpt::float,
+        ROUND((avg_outpt-overall_avg)::numeric,2)::float AS deviation
+        FROM
+            (SELECT race, AVG(outpatient_beneficiary_responsibility) AS avg_outpt,
+                (SELECT AVG(outpatient_beneficiary_responsibility)
+                FROM beneficiary_sample_2010
+                WHERE {0}='t') AS overall_avg
+            FROM beneficiary_sample_2010
+            WHERE {0}='t'
+            GROUP BY race) AS sub_query
+        ORDER BY avg_outpt DESC""".format(cleaned_col)
+        cur.execute(query) #execute query
+        result = cur.fetchall() # fetch all results
+        for row in result:
+            disease_avg_dict = {'avg_outpatient_bene_resp': row['avg_outpt'], 'deviation':row['deviation']}
+            race = {row['race']:disease_avg_dict}
+            outpt_bene_resp.append(race)
+    except Exception as e:
+        raise Exception("Error: {}".format(e.message))
+    return outpt_bene_resp
+
+
 def disease_frequency(col):
     """
     Get the states in descending order of the percentage of disease claims,
@@ -100,4 +161,5 @@ def disease_frequency(col):
 
 if __name__ == "__main__":
     cursor_connect()
-    print disease_frequency('diabetes')
+    # print disease_frequency('diabetes')
+    print disease_bene_resp('diabetes')
