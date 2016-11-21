@@ -99,6 +99,47 @@ def disease_bene_resp(disease_col):
     return outpt_bene_resp
 
 
+def hmo_mo_max_reimb():
+    """
+    Get the max value of annual carrier primary payer reimbursement for each bin of Part A coverage hmo months, given
+    the sex of beneficiaries that have the most count of comorbidities of rheumatoid and osteo- arthritis and diabetes.
+    The query is ordered by the max values of carrier primary payer reimbursement in descending order.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    json
+        A labeled JSON object with the bins of Part A coverage hmo months and their respective max value of carrier
+        primary payer reimbursement, filtered for the sex that has the most prevalence for comorbidities of rheumatoid
+        & osteo- arthritis.
+    """
+    con, cur = cursor_connect(psycopg2.extras.DictCursor)
+    query="""
+    SELECT part_a_coverage_months, MAX(primary_payer_reimbursement) AS max_primary_reimb
+    FROM beneficiary_sample_2010
+    WHERE sex IN
+        (SELECT sex
+        FROM
+            (SELECT sex, SUM(CASE
+                WHEN rheumatoid_osteo_arthritis=True AND diabetes=True THEN 1 ELSE 0
+                END) AS n_comorbid
+            FROM beneficiary_sample_2010
+            GROUP BY sex
+            ORDER BY n_comorbid DESC LIMIT 1) AS sub_q)
+    GROUP BY part_a_coverage_months
+    ORDER BY max_primary_reimb DESC"""
+    cur.execute(query)  # execute query
+    result = cur.fetchall()  # fetch results
+    hmo_reimb = dict()
+    for row in result:
+        hmo_reimb[row['part_a_coverage_months']] = row['max_primary_reimb']
+    max_reimb_dict = {'max_primary_payer_reimbursements_per_hmo_mo': hmo_reimb}
+    return max_reimb_dict
+
+
 def percent_comorbidities(lower_bound, upper_bound):
     """
     Get the percent of comorbidities of heart failure with ischemic heart disease, diabetes, & stroke/transient ischemic
@@ -203,8 +244,7 @@ def osteo_proportion_reimb():
                     GROUP BY state) AS RHS
                 ON LHS.state=RHS.state) AS sub_q) AS RRHS
     WHERE proportion_osteo_inpt_reimb > avg_osteo_proportion
-    ORDER BY proportion_osteo_inpt_reimb ASC
-    """
+    ORDER BY proportion_osteo_inpt_reimb ASC"""
     cur.execute(query) # execute query
     result = cur.fetchall() # fetch results
     for row in result:
@@ -278,4 +318,5 @@ if __name__ == "__main__":
     # print disease_frequency('diabetes')
     # print disease_bene_resp('diabetes')
     # print percent_comorbidities('60',70)
-    print osteo_proportion_reimb()
+    # print osteo_proportion_reimb()
+    print hmo_mo_max_reimb()
