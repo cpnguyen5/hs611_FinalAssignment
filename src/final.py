@@ -55,7 +55,6 @@ def disease_bene_resp(disease_col):
         A labeled JSON object with the race and their respective average outpatient beneficiary responsibility and
         deviation from the overall average of outpatient beneficiary responsibility.
     """
-    outpt_bene_resp = []
     accepted_cols = (
         "end_stage_renal_disease",
         "alzheimers_related_senile",
@@ -77,7 +76,7 @@ def disease_bene_resp(disease_col):
             raise AssertionError("Column '{0}' is not allowed".format(cleaned_col)) # error inapplicable disease
         con, cur = cursor_connect(psycopg2.extras.DictCursor) #access retrieved records as Python dict
         query = """
-        SELECT race, avg_outpt::float,
+        SELECT race, ROUND(avg_outpt::numeric,2)::float AS avg_outpt,
         ROUND((avg_outpt-overall_avg)::numeric,2)::float AS deviation
         FROM
             (SELECT race, AVG(outpatient_beneficiary_responsibility) AS avg_outpt,
@@ -90,10 +89,13 @@ def disease_bene_resp(disease_col):
         ORDER BY avg_outpt DESC""".format(cleaned_col)
         cur.execute(query) #execute query
         result = cur.fetchall() # fetch all results
+        avg_bene_resp = dict() # average beneficiary responsibility
+        dev = dict() # deviation from average
         for row in result:
-            disease_avg_dict = {'avg_outpatient_bene_resp': row['avg_outpt'], 'deviation':row['deviation']}
-            race = {row['race']:disease_avg_dict}
-            outpt_bene_resp.append(race)
+            avg_bene_resp[row['race']]=row['avg_outpt']
+            dev[row['race']]=row['deviation']
+        outpt_bene_resp = {'average_outpatient_bene_resp': avg_bene_resp,
+                           'deviation': dev}
     except Exception as e:
         raise Exception("Error: {}".format(e.message))
     return outpt_bene_resp
