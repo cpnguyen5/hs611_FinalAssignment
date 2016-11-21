@@ -157,7 +157,8 @@ def osteo_proportion_reimb():
     """
     Get the states and their respective proportion of osteoporosis-related annual Medicare inpatient reimbursement to
     the overall osteoporosis-relate annual Medicare inpatient reimbursement, where the state's proportion is above the
-    national average (of osteoporosis-related annual Medicare reimbursement).
+    national average (of osteoporosis-related annual Medicare reimbursement). The query is ordered by the proportion
+    in ascending order.
 
     Parameters
     ----------
@@ -201,7 +202,6 @@ def osteo_proportion_reimb():
                     FROM beneficiary_sample_2010
                     GROUP BY state) AS RHS
                 ON LHS.state=RHS.state) AS sub_q) AS RRHS
-
     WHERE proportion_osteo_inpt_reimb > avg_osteo_proportion
     ORDER BY proportion_osteo_inpt_reimb ASC
     """
