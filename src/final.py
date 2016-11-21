@@ -153,6 +153,66 @@ def percent_comorbidities(lower_bound, upper_bound):
     return perc_comorbidities
 
 
+def osteo_proportion_reimb():
+    """
+    Get the states and their respective proportion of osteoporosis-related annual Medicare inpatient reimbursement to
+    the overall osteoporosis-relate annual Medicare inpatient reimbursement, where the state's proportion is above the
+    national average (of osteoporosis-related annual Medicare reimbursement).
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    json
+        A labeled JSON object with the states and their respective proportion of osteoporosis-related annual Medicare
+        inpatient reimbursement, where the state's proportion is above the national average.
+    """
+    proportion = {}
+    con, cur = cursor_connect(psycopg2.extras.DictCursor)
+    query = """
+    SELECT state, proportion_osteo_inpt_reimb
+    FROM
+        (SELECT LHS.state AS state, LHS.osteo_inpt_reimb, RHS.total_inpt_reimb,
+        (LHS.osteo_inpt_reimb::float/RHS.total_inpt_reimb) AS proportion_osteo_inpt_reimb
+        FROM
+            (SELECT state, SUM(inpatient_reimbursement) AS osteo_inpt_reimb
+            FROM beneficiary_sample_2010
+            WHERE osteoporosis=True
+            GROUP BY state) AS LHS
+            INNER JOIN
+                (SELECT state, SUM(inpatient_reimbursement) AS total_inpt_reimb
+                FROM beneficiary_sample_2010
+                GROUP BY state) AS RHS
+            ON LHS.state=RHS.state) AS LLHS
+    CROSS JOIN
+        (SELECT AVG(proportion_osteo_inpt_reimb) AS avg_osteo_proportion
+        FROM
+            (SELECT LHS.state AS state, LHS.osteo_inpt_reimb, RHS.total_inpt_reimb,
+            (LHS.osteo_inpt_reimb::float/RHS.total_inpt_reimb) AS proportion_osteo_inpt_reimb
+            FROM
+                (SELECT state, SUM(inpatient_reimbursement) AS osteo_inpt_reimb
+                FROM beneficiary_sample_2010
+                WHERE osteoporosis=True
+                GROUP BY state) AS LHS
+                INNER JOIN
+                    (SELECT state, SUM(inpatient_reimbursement) AS total_inpt_reimb
+                    FROM beneficiary_sample_2010
+                    GROUP BY state) AS RHS
+                ON LHS.state=RHS.state) AS sub_q) AS RRHS
+
+    WHERE proportion_osteo_inpt_reimb > avg_osteo_proportion
+    ORDER BY proportion_osteo_inpt_reimb ASC
+    """
+    cur.execute(query) # execute query
+    result = cur.fetchall() # fetch results
+    for row in result:
+        proportion[row['state']]=row['proportion_osteo_inpt_reimb']
+    result_dict = {'osteoporosis_inpatient_reimb_proportion':proportion}
+    return result_dict
+
+
 def disease_frequency(col):
     """
     Get the states in descending order of the percentage of disease claims,
@@ -217,4 +277,5 @@ if __name__ == "__main__":
     cursor_connect()
     # print disease_frequency('diabetes')
     # print disease_bene_resp('diabetes')
-    print percent_comorbidities('60',70)
+    # print percent_comorbidities('60',70)
+    print osteo_proportion_reimb()
