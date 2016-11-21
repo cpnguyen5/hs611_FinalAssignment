@@ -135,8 +135,8 @@ def hmo_mo_max_reimb():
     result = cur.fetchall()  # fetch results
     hmo_reimb = dict()
     for row in result:
-        hmo_reimb[row['part_a_coverage_months']] = row['max_primary_reimb']
-    max_reimb_dict = {'max_primary_payer_reimbursements_per_hmo_mo': hmo_reimb}
+        hmo_reimb["Part A hmo mo - " + str(row['part_a_coverage_months'])] = row['max_primary_reimb']
+    max_reimb_dict = {"max_primary_payer_reimbursements_per_hmo_mo": hmo_reimb}
     return max_reimb_dict
 
 
@@ -186,12 +186,13 @@ def percent_comorbidities(lower_bound, upper_bound):
         WHERE AGE >={0} AND AGE <{1}; """.format(str(lower_bound), str(upper_bound))
         cur.execute(query) # execute query
         result = cur.fetchall() #fetch all results
-        perc_comorbidities = {'percent_heart_fail_ischemic_heart': float(result[0]['perc_hf_ih']), # comorbidity: heart failure + ischemic heart
-                              'percent_heart_fail_diabetes': float(result[0]['perc_hf_db']), # comorbidity: heart failture + diabetes
-                              'percent_heart_fail_stroke': float(result[0]['perc_hf_stroke'])} # comorbidity: heart failure + stroke
+        perc_comorbidities = {"heart fail & ischemic heart": float(result[0]['perc_hf_ih']), # comorbidity: heart failure + ischemic heart
+                              "heartfail & diabetes": float(result[0]['perc_hf_db']), # comorbidity: heart failture + diabetes
+                              "heart_fail & stroke": float(result[0]['perc_hf_stroke'])} # comorbidity: heart failure + stroke
+        comorbid_dict = {"percent_comorbidities": perc_comorbidities}
     except Exception as e:
         raise Exception("Error: {}".format(e.message))
-    return perc_comorbidities
+    return comorbid_dict
 
 
 def osteo_proportion_reimb():
@@ -249,7 +250,7 @@ def osteo_proportion_reimb():
     result = cur.fetchall() # fetch results
     for row in result:
         proportion[row['state']]=row['proportion_osteo_inpt_reimb']
-    result_dict = {'osteoporosis_inpatient_reimb_proportion':proportion}
+    result_dict = {"osteoporosis_inpatient_reimb_proportion":proportion}
     return result_dict
 
 
@@ -319,4 +320,4 @@ if __name__ == "__main__":
     # print disease_bene_resp('diabetes')
     # print percent_comorbidities('60',70)
     # print osteo_proportion_reimb()
-    print hmo_mo_max_reimb()
+    # print hmo_mo_max_reimb()
