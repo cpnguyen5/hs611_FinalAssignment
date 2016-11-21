@@ -99,6 +99,60 @@ def disease_bene_resp(disease_col):
     return outpt_bene_resp
 
 
+def percent_comorbidities(lower_bound, upper_bound):
+    """
+    Get the percent of comorbidities of heart failure with ischemic heart disease, diabetes, & stroke/transient ischemic
+    attack for diseased individuals, given specific age intervals [lower_bound, upper_bound).
+
+    Parameters
+    ----------
+    lower_bound : int, str, unicode
+        Lower bound of age group, including endpoint (start interval).
+
+    upper_bound: int, str, unicode
+        Upper bound of age group, excluding endpoint (end interval).
+
+    Returns
+    -------
+    json
+        A labeled JSON object with the percent of diseased individuals with the following comorbidities: heart failure
+        +  ischemic heart disease, heart failure + diabetes, heart failure + stroke/transient ischemic attack.
+    """
+    accepted_ages = range(102)
+    try:
+        if int(lower_bound) not in accepted_ages:
+            raise AssertionError("Lower Bound '{0}' is not allowed".format(lower_bound))
+        if int(upper_bound) not in accepted_ages:
+            raise AssertionError("Upper Bound '{0}' is not allowed".format(upper_bound))
+        if int(lower_bound) > int(upper_bound):
+            raise AssertionError("Lower Bound '{0}' greater than upper bound '{1}' is not allowed".format(lower_bound, upper_bound))
+        if type(lower_bound) == float or type(upper_bound) == float:
+            raise AssertionError("Float values for age value is not allowed")
+        con, cur = cursor_connect(psycopg2.extras.DictCursor)  # access retrieved records as Python dict
+        query = """SELECT ROUND((SUM(CASE
+	      WHEN (heart_failure='t' AND ischemic_heart='t') THEN 1 ELSE 0
+        END)*100.0)/COUNT(*),2) AS perc_hf_ih,
+        ROUND((SUM(CASE
+	      WHEN (heart_failure='t' AND diabetes='t') THEN 1 ELSE 0
+        END)*100.0)/COUNT(*),2) AS perc_hf_db,
+        ROUND((SUM(CASE
+	      WHEN (heart_failure='t' AND stroke_ischemic_attack='t') THEN 1 ELSE 0
+        END)*100.0)/COUNT(*),2) AS perc_hf_stroke
+        FROM
+	      (SELECT *, FLOOR((dod-dob)/365::float) AS age
+	      FROM beneficiary_sample_2010
+	      WHERE dod IS NOT NULL) AS sub_query
+        WHERE AGE >={0} AND AGE <{1}; """.format(str(lower_bound), str(upper_bound))
+        cur.execute(query) # execute query
+        result = cur.fetchall() #fetch all results
+        perc_comorbidities = {'percent_heart_fail_ischemic_heart': float(result[0]['perc_hf_ih']), # comorbidity: heart failure + ischemic heart
+                              'percent_heart_fail_diabetes': float(result[0]['perc_hf_db']), # comorbidity: heart failture + diabetes
+                              'percent_heart_fail_stroke': float(result[0]['perc_hf_stroke'])} # comorbidity: heart failure + stroke
+    except Exception as e:
+        raise Exception("Error: {}".format(e.message))
+    return perc_comorbidities
+
+
 def disease_frequency(col):
     """
     Get the states in descending order of the percentage of disease claims,
@@ -162,4 +216,5 @@ def disease_frequency(col):
 if __name__ == "__main__":
     cursor_connect()
     # print disease_frequency('diabetes')
-    print disease_bene_resp('diabetes')
+    # print disease_bene_resp('diabetes')
+    print percent_comorbidities('60',70)
