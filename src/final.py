@@ -52,6 +52,11 @@ def disease_bene_resp(disease_col):
     json
         A labeled JSON object with the race and their respective average outpatient beneficiary responsibility and
         deviation from the overall average of outpatient beneficiary responsibility.
+
+    Examples
+    --------
+    /api/v1/bene_resp/diabetes -- disease_bene_resp('diabetes')
+    /api/v1/bene_resp/osteoporosis -- disease_bene_resp('osteoporosis')
     """
     accepted_cols = (
         "end_stage_renal_disease",
@@ -115,6 +120,9 @@ def hmo_mo_max_reimb():
         A labeled JSON object with the bins of Part A coverage hmo months and their respective max value of annual
         primary payer reimbursement, filtered for the sex that has the most prevalence for comorbidities of rheumatoid
         & osteo- arthritis.
+    Examples
+    --------
+    /api/v1/max_pp_reimb -- hmo_mo_max_reimb()
     """
     con, cur = cursor_connect(psycopg2.extras.DictCursor)
     query="""
@@ -158,6 +166,11 @@ def percent_comorbidities(lower_bound, upper_bound):
     json
         A labeled JSON object with the percent of diseased individuals with the following comorbidities: heart failure
         +  ischemic heart disease, heart failure + diabetes, heart failure + stroke/transient ischemic attack.
+
+    Examples
+    --------
+    /api/v1/perc_comorbidities/50_70 -- percent_comorbidities(50, 70)
+    /api/v1/perc_comorbidities/80_90 -- percent_comorbidities('80', 90)
     """
     accepted_ages = range(102)
     try:
@@ -211,6 +224,10 @@ def osteo_proportion_reimb():
     json
         A labeled JSON object with the states and their respective proportion of osteoporosis-related annual Medicare
         inpatient reimbursement, where the state's proportion is above the national average.
+
+    Examples
+    --------
+    /api/v1/state/prop_inpatient_reimb/osteo -- osteo_proportion_reimb()
     """
     proportion = {}
     con, cur = cursor_connect(psycopg2.extras.DictCursor)
@@ -268,6 +285,10 @@ def median_age():
     json
         A labeled JSON object with the median of age of individuals with depression and have the total hmo coverage
         months below the national average.
+
+    Examples
+    --------
+    /api/v1/median/age -- median_age()
     """
     con, cur = cursor_connect(psycopg2.extras.DictCursor)
     query="""
@@ -296,9 +317,8 @@ def median_age():
 
 if __name__ == "__main__":
     cursor_connect()
-    # print disease_frequency('diabetes')
     # print disease_bene_resp('diabetes')
     # print percent_comorbidities('60',70)
     # print osteo_proportion_reimb()
     # print hmo_mo_max_reimb()
-    print median_age()
+    # print median_age()
