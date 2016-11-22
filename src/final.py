@@ -5,8 +5,6 @@ import json
 from exceptions import Exception, AssertionError
 
 
-TABLE_NAME = "beneficiary_sample_2010"
-
 def cursor_connect(cursor_factory=None):
     """
     Connects to the DB and returns the connection and cursor, ready to use.
@@ -256,6 +254,47 @@ def osteo_proportion_reimb():
     return result_dict
 
 
+def median_age():
+    """
+    Get the median of ages of all individuals that were diagnosed with depression and have the total of hmo coverage
+    months that were below the national average.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    json
+        A labeled JSON object with the median of age of individuals with depression and have the total hmo coverage
+        months below the national average.
+    """
+    con, cur = cursor_connect(psycopg2.extras.DictCursor)
+    query="""
+    SELECT MAX(age)::int as median
+    FROM
+      (SELECT age, ntile(2) OVER (ORDER BY age ASC) AS bucket
+        FROM
+	      (SELECT FLOOR(CASE
+		    WHEN dod IS NULL THEN ((('2010-01-01'::Date)-dob)/365::float)
+			ELSE ((dod-dob)::float/365)
+		  END) AS age
+	      FROM beneficiary_sample_2010
+	      WHERE depression=True AND
+		  hmo_coverage_months < (SELECT ROUND(AVG(hmo_coverage_months)) FROM beneficiary_sample_2010)
+	      ) AS sub_q
+      ) as tile
+    WHERE bucket = 1
+    GROUP BY bucket;
+    """
+    cur.execute(query)  # execute query
+    result = cur.fetchall()  # fetch results
+    age = {"age": result[0]['median']}
+    median_dict = {"median": age}
+    return median_dict
+
+
+TABLE_NAME = "beneficiary_sample_2010"
 def disease_frequency(col):
     """
     Get the states in descending order of the percentage of disease claims,
@@ -323,3 +362,4 @@ if __name__ == "__main__":
     # print percent_comorbidities('60',70)
     # print osteo_proportion_reimb()
     # print hmo_mo_max_reimb()
+    print median_age()
