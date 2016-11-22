@@ -101,9 +101,9 @@ def disease_bene_resp(disease_col):
 
 def hmo_mo_max_reimb():
     """
-    Get the max value of annual carrier primary payer reimbursement for each bin of Part A coverage hmo months, given
+    Get the max value of annual primary payer reimbursement for each bin of Part A coverage hmo months, given
     the sex of beneficiaries that have the most count of comorbidities of rheumatoid and osteo- arthritis and diabetes.
-    The query is ordered by the max values of carrier primary payer reimbursement in descending order.
+    The query is ordered by the max values of primary payer reimbursement in descending order.
 
     Parameters
     ----------
@@ -112,7 +112,7 @@ def hmo_mo_max_reimb():
     Returns
     -------
     json
-        A labeled JSON object with the bins of Part A coverage hmo months and their respective max value of carrier
+        A labeled JSON object with the bins of Part A coverage hmo months and their respective max value of annual
         primary payer reimbursement, filtered for the sex that has the most prevalence for comorbidities of rheumatoid
         & osteo- arthritis.
     """
