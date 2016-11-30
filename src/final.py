@@ -89,7 +89,7 @@ def disease_bene_resp(disease_col):
             FROM beneficiary_sample_2010
             WHERE {0}='t'
             GROUP BY race) AS sub_query
-        ORDER BY avg_outpt DESC""".format(cleaned_col)
+        ORDER BY avg_outpt DESC;""".format(cleaned_col)
         cur.execute(query) #execute query
         result = cur.fetchall() # fetch all results
         avg_bene_resp = dict() # average beneficiary responsibility
@@ -138,7 +138,7 @@ def hmo_mo_max_reimb():
             GROUP BY sex
             ORDER BY n_comorbid DESC LIMIT 1) AS sub_q)
     GROUP BY part_a_coverage_months
-    ORDER BY max_primary_reimb DESC"""
+    ORDER BY max_primary_reimb DESC;"""
     cur.execute(query)  # execute query
     result = cur.fetchall()  # fetch results
     hmo_reimb = dict()
@@ -196,7 +196,7 @@ def percent_comorbidities(lower_bound, upper_bound):
 	      (SELECT *, FLOOR((dod-dob)/365::float) AS age
 	      FROM beneficiary_sample_2010
 	      WHERE dod IS NOT NULL) AS sub_query
-        WHERE AGE >={0} AND AGE <{1}; """.format(str(lower_bound), str(upper_bound))
+        WHERE AGE >={0} AND AGE <{1};""".format(str(lower_bound), str(upper_bound))
         cur.execute(query) # execute query
         result = cur.fetchall() #fetch all results
         perc_comorbidities = {"heart fail & ischemic heart": float(result[0]['perc_hf_ih']), # comorbidity: heart failure + ischemic heart
@@ -262,7 +262,7 @@ def osteo_proportion_reimb():
                     GROUP BY state) AS RHS
                 ON LHS.state=RHS.state) AS sub_q) AS RRHS
     WHERE proportion_osteo_inpt_reimb > avg_osteo_proportion
-    ORDER BY proportion_osteo_inpt_reimb ASC"""
+    ORDER BY proportion_osteo_inpt_reimb ASC;"""
     cur.execute(query) # execute query
     result = cur.fetchall() # fetch results
     for row in result:
@@ -315,8 +315,8 @@ def median_age():
     return median_dict
 
 
-if __name__ == "__main__":
-    cursor_connect()
+# if __name__ == "__main__":
+    # print cursor_connect()
     # print disease_bene_resp('diabetes')
     # print percent_comorbidities('60',70)
     # print osteo_proportion_reimb()
